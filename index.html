@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Students</title>
+</head>
+<body>
+  <h1>Search Students</h1>
+  <form id="searchForm">
+    <label for="searchInput">Search by name:</label>
+    <input type="text" id="searchInput" name="searchInput">
+    <button type="button" id="searchButton">Search</button>
+    <button type="button" id="allStudentsButton">Show All Students</button>
+  </form>
+  <div id="results"></div>
+  
+  <h2>Add New Student</h2>
+  <form id="addStudentForm">
+    <label for="nameInput">Name:</label>
+    <input type="text" id="nameInput" name="nameInput">
+    <label for="ageInput">Age:</label>
+    <input type="number" id="ageInput" name="ageInput">
+    <label for="classInput">Class:</label>
+    <input type="number" id="classInput" name="classInput">
+    <label for="gradeInput">Grade:</label>
+    <input type="number" id="gradeInput" name="gradeInput" step="0.1">
+    <button type="submit">Add Student</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('searchForm');
+    const addStudentForm = document.getElementById('addStudentForm');
+    const resultsDiv = document.getElementById('results');
+    const searchButton = document.getElementById('searchButton');
+    const allStudentsButton = document.getElementById('allStudentsButton');
+
+    // Função para buscar alunos por nome
+    async function searchStudentsByName(searchTerm) {
+      const response = await fetch(`/alunos?nome=${searchTerm}`);
+      const data = await response.json();
+      displayResults(data);
+    }
+
+    // Adicionando evento de clique ao botão "Search"
+    let searchClicks = 0;
+    searchButton.addEventListener('click', async () => {
+      searchClicks++;
+      const searchTerm = form.searchInput.value.trim();
+      if (searchTerm !== '' && searchClicks === 1) {
+        await searchStudentsByName(searchTerm);
+      } else if (searchTerm === '' && searchClicks > 1) {
+        const response = await fetch('/alunos');
+        const data = await response.json();
+        displayResults(data);
+      }
+    });
+
+    // Adicionando evento de clique ao botão "Show All Students"
+    allStudentsButton.addEventListener('click', async () => {
+      const searchTerm = form.searchInput.value.trim();
+      if (searchTerm === '') {
+        const response = await fetch('/alunos');
+        const data = await response.json();
+        displayResults(data);
+      }
+    });
+
+    // Adicionando evento de envio ao formulário de adição de aluno
+    addStudentForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(addStudentForm);
+      const studentData = {
+        Nome: formData.get('nameInput'),
+        Idade: formData.get('ageInput'),
+        Classe: formData.get('classInput'),
+        Nota: formData.get('gradeInput')
+      };
+      const response = await fetch('/addStudent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(studentData)
+      });
+      const result = await response.json();
+      alert(result.message);
+    });
+
+    function displayResults(data) {
+      resultsDiv.innerHTML = '';
+      data.forEach(student => {
+        const studentInfo = `<p>Name: ${student.Nome}, Age: ${student.Idade}, Class: ${student.Classe}, Grade: ${student.Nota}</p>`;
+        resultsDiv.innerHTML += studentInfo;
+      });
+    }
+  </script>
+</body>
+</html>
